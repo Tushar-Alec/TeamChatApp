@@ -1,9 +1,10 @@
 "use client";
 import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db } from "@/firebase/firebase";
 import { useState } from "react";
-import { auth } from "@/firebase";
+import { auth } from "@/firebase/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import RedirectIfAuth from "@/components/RedirectIfAuth";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -35,6 +36,7 @@ export default function SignupPage() {
 
 
   return (
+    <RedirectIfAuth>
     <div style={{ display: "flex", height: "100vh", justifyContent: "center", alignItems: "center" }}>
       <div style={{ width: "300px" }}>
         <h2 style={{ textAlign: "center" }}>Signup</h2>
@@ -106,5 +108,6 @@ export default function SignupPage() {
 
       </div>
     </div>
+    </RedirectIfAuth>
   );
 }

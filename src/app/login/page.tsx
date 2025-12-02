@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { auth } from "@/firebase";
+import { auth } from "@/firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-
+import RedirectIfAuth from "@/components/RedirectIfAuth";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +20,7 @@ export default function LoginPage() {
   };
 
   return (
+    <RedirectIfAuth>
     <div style={{ display: "flex", height: "100vh", justifyContent: "center", alignItems: "center" }}>
       <div style={{ width: "300px" }}>
         <h2 style={{ textAlign: "center" }}>Login</h2>
@@ -83,5 +84,6 @@ export default function LoginPage() {
 
       </div>
     </div>
+    </RedirectIfAuth>
   );
 }

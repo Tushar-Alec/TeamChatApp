@@ -53,11 +53,28 @@ export default function Sidebar() {
         style={{
           padding: "20px",
           borderBottom: "1px solid #222",
+          fontSize: "30px",
+          fontWeight: "bold",
+          background: "#cd5b5bff",
+          textAlign: "center",
+          letterSpacing: "3px",
+          color: "white",
+        }}
+      >
+      TeamChat
+      </div>
+      <div
+        style={{
+          padding: "20px",
+          borderBottom: "1px solid #222",
           fontSize: "20px",
           fontWeight: "bold",
-          background: "linear-gradient(90deg, #1a1a1a, #111)",
+          background: "#0c0c0c",
           textAlign: "left",
           letterSpacing: "0.5px",
+          alignItems: "center",
+          display: "flex",
+          justifyContent: "center",
         }}
       >
         Channels
@@ -76,13 +93,14 @@ export default function Sidebar() {
             padding: "10px",
             background: "#1a1818ff",
             color: "white",
-            border: "none",
+            border: "1px groove white",
             borderRadius: "6px",
             cursor: "pointer",
             fontSize: "14px",
             fontWeight: "bold",
             marginBottom: "10px",
             transition: "0.2s",
+
           }}
           onClick={async () => {
             const channelName = prompt("Enter channel name:");
@@ -168,7 +186,7 @@ export default function Sidebar() {
             padding: "10px",
             background: "#1a1818ff",
             color: "white",
-            border: "none",
+            border: "1px groove white",
             borderRadius: "6px",
             cursor: "pointer",
             fontSize: "14px",

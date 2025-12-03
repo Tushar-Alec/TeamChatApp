@@ -10,7 +10,6 @@ import { addDoc } from "firebase/firestore";
 import { create } from "domain";
 import { doc, setDoc } from "firebase/firestore";
 
-
 export default function Sidebar() {
   const [channels, setChannels] = useState<any[]>([]);
   const pathname = usePathname();
@@ -75,12 +74,15 @@ export default function Sidebar() {
           style={{
             width: "100%",
             padding: "10px",
-            background: "#1f1f1f",
+            background: "#1a1818ff",
             color: "white",
-            border: "1px solid #333",
+            border: "none",
             borderRadius: "6px",
             cursor: "pointer",
-            fontSize: "15px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            marginBottom: "10px",
+            transition: "0.2s",
           }}
           onClick={async () => {
             const channelName = prompt("Enter channel name:");
@@ -97,8 +99,10 @@ export default function Sidebar() {
               createdBy: user?.displayName || user?.email || "Unknown",
             });
           }}
+          onMouseOver={(e) => (e.currentTarget.style.background = "#3b3737ff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "#1a1818ff")}
         >
-          + Create Channel
+          Create Channel
         </button>
       </div>
 
@@ -147,41 +151,41 @@ export default function Sidebar() {
         })}
       </div>
 
-<div
-  style={{
-    padding: "15px 20px",
-    borderTop: "1px solid #222",
-    background: "#0c0c0c",
-  }}
->
-  <button
-    onClick={() => {
-      const auth = getAuth();
-      signOut(auth);
-    }}
-    style={{
-      width: "100%",
-      padding: "10px",
-      background: "#d32f2f",
-      color: "white",
-      border: "none",
-      borderRadius: "6px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "bold",
-      marginBottom: "10px",
-      transition: "0.2s",
-    }}
-    onMouseOver={(e) => (e.currentTarget.style.background = "#3b3737ff")}
-    onMouseOut={(e) => (e.currentTarget.style.background = "#1a1818ff")}
-  >
-    Logout
-  </button>
+      <div
+        style={{
+          padding: "15px 20px",
+          borderTop: "1px solid #222",
+          background: "#0c0c0c",
+        }}
+      >
+        <button
+          onClick={() => {
+            const auth = getAuth();
+            signOut(auth);
+          }}
+          style={{
+            width: "100%",
+            padding: "10px",
+            background: "#1a1818ff",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "14px",
+            fontWeight: "bold",
+            marginBottom: "10px",
+            transition: "0.2s",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = "#3b3737ff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "#1a1818ff")}
+        >
+          Logout
+        </button>
 
-  <div style={{ fontSize: "14px", opacity: 0.9 }}>
-    Logged in as <strong>{name}</strong>
-  </div>
-</div>
+        <div style={{ fontSize: "14px", opacity: 0.9 }}>
+          Logged in as <strong>{name}</strong>
+        </div>
+      </div>
     </div>
   );
 }

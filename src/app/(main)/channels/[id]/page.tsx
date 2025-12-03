@@ -1,9 +1,8 @@
 "use client";
-
 import { use } from "react";
 
 export default function ChannelPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params); // ✅ unwrap the promise
+  const { id } = use(params); 
 
   return (
     <div style={{ padding: "20px" }}>

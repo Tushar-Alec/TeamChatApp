@@ -1,18 +1,21 @@
 "use client";
 
-import { getAuth } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { db } from "@/firebase/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { addDoc } from "firebase/firestore";
+import { create } from "domain";
+import { doc, setDoc } from "firebase/firestore";
+
 
 export default function Sidebar() {
   const [channels, setChannels] = useState<any[]>([]);
   const pathname = usePathname();
   const [name, setName] = useState("");
 
-  
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "channels"), (snapshot) => {
       const list = snapshot.docs.map((doc) => ({
@@ -25,7 +28,6 @@ export default function Sidebar() {
     return () => unsub();
   }, []);
 
-  
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
@@ -48,7 +50,6 @@ export default function Sidebar() {
         flexDirection: "column",
       }}
     >
-    
       <div
         style={{
           padding: "20px",
@@ -63,7 +64,44 @@ export default function Sidebar() {
         Channels
       </div>
 
-      
+      <div
+        style={{
+          padding: "15px 20px",
+          borderTop: "1px solid #222",
+          background: "#0c0c0c",
+        }}
+      >
+        <button
+          style={{
+            width: "100%",
+            padding: "10px",
+            background: "#1f1f1f",
+            color: "white",
+            border: "1px solid #333",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "15px",
+          }}
+          onClick={async () => {
+            const channelName = prompt("Enter channel name:");
+            if (!channelName) return;
+
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            const docRef = doc(db, "channels", channelName.toLowerCase());
+
+            await setDoc(docRef, {
+              name: channelName,
+              createdAt: new Date(),
+              createdBy: user?.displayName || user?.email || "Unknown",
+            });
+          }}
+        >
+          + Create Channel
+        </button>
+      </div>
+
       <div style={{ padding: "15px", flex: 1 }}>
         {channels.map((c) => {
           const isActive = pathname === `/channels/${c.id}`;
@@ -92,10 +130,14 @@ export default function Sidebar() {
                   border: isActive ? "1px solid #555" : "1px solid transparent",
                 }}
                 onMouseOver={(e) =>
-                  (e.currentTarget.style.background = isActive ? "#3d3d3d" : "#262626")
+                  (e.currentTarget.style.background = isActive
+                    ? "#3d3d3d"
+                    : "#262626")
                 }
                 onMouseOut={(e) =>
-                  (e.currentTarget.style.background = isActive ? "#333" : "#161616")
+                  (e.currentTarget.style.background = isActive
+                    ? "#333"
+                    : "#161616")
                 }
               >
                 <span style={{ opacity: 0.8 }}>#</span> {c.name}
@@ -105,18 +147,41 @@ export default function Sidebar() {
         })}
       </div>
 
-      
-      <div
-        style={{
-          padding: "15px 20px",
-          borderTop: "1px solid #222",
-          background: "#0c0c0c",
-          fontSize: "14px",
-          opacity: 0.9,
-        }}
-      >
-        Logged in as <strong>{name}</strong>
-      </div>
+<div
+  style={{
+    padding: "15px 20px",
+    borderTop: "1px solid #222",
+    background: "#0c0c0c",
+  }}
+>
+  <button
+    onClick={() => {
+      const auth = getAuth();
+      signOut(auth);
+    }}
+    style={{
+      width: "100%",
+      padding: "10px",
+      background: "#d32f2f",
+      color: "white",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "bold",
+      marginBottom: "10px",
+      transition: "0.2s",
+    }}
+    onMouseOver={(e) => (e.currentTarget.style.background = "#3b3737ff")}
+    onMouseOut={(e) => (e.currentTarget.style.background = "#1a1818ff")}
+  >
+    Logout
+  </button>
+
+  <div style={{ fontSize: "14px", opacity: 0.9 }}>
+    Logged in as <strong>{name}</strong>
+  </div>
+</div>
     </div>
   );
 }

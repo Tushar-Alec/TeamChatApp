@@ -1,4 +1,5 @@
-// src/app/layout.tsx
+import "./globals.css";
+
 export const metadata = {
   title: " Chat App",
   description: "Realtime chat app",

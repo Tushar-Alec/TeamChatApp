@@ -46,7 +46,7 @@ export default function SignupPage() {
           placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+          style={{ width: "100%", padding: "8px", margin: "5px 0", border: "1px solid #ccc", borderRadius: "4px" }}
         />
 
         <input
@@ -54,7 +54,7 @@ export default function SignupPage() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+          style={{ width: "100%", padding: "8px", margin: "5px 0", border: "1px solid #ccc", borderRadius: "4px" }}
         />
 
         <input
@@ -62,7 +62,7 @@ export default function SignupPage() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+          style={{ width: "100%", padding: "8px", margin: "5px 0", border: "1px solid #ccc", borderRadius: "4px" }}
         />
 
         {error && <p style={{ color: "red" }}>{error}</p>}

@@ -1,21 +1,54 @@
 "use client";
 
 import { use } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { db } from "@/firebase/firebase";
-import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  doc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-export default function ChannelPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ChannelPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
+  const [joined, setJoined] = useState(false);
+  const [memberCount, setMemberCount] = useState(0);
 
   const auth = getAuth();
   const user = auth.currentUser;
 
-  
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const memberRef = doc(db, "channels", id, "members", user?.uid || "unknown");
+
+  // ✅ Check if joined
+  useEffect(() => {
+    if (!user) return;
+
+    const checkJoin = async () => {
+      const snap = await getDoc(memberRef);
+      setJoined(snap.exists());
+    };
+
+    checkJoin();
+  }, [id, user]);
+
+  // ✅ Listen to messages
   useEffect(() => {
     const q = query(
       collection(db, "channels", id, "messages"),
@@ -33,9 +66,14 @@ export default function ChannelPage({ params }: { params: Promise<{ id: string }
     return () => unsub();
   }, [id]);
 
-  
+  // ✅ Auto scroll to latest message
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ✅ Send Message
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !joined) return;
 
     await addDoc(collection(db, "channels", id, "messages"), {
       text: message,
@@ -47,64 +85,182 @@ export default function ChannelPage({ params }: { params: Promise<{ id: string }
     setMessage("");
   };
 
+  // ✅ Join Channel
+  const joinChannel = async () => {
+    if (!user) return;
+
+    await setDoc(memberRef, {
+      uid: user.uid,
+      name: user.displayName || user.email || "User",
+      joinedAt: serverTimestamp(),
+    });
+
+    setJoined(true);
+  };
+
+  // ✅ Leave Channel
+  const leaveChannel = async () => {
+    if (!user) return;
+
+    await deleteDoc(memberRef);
+    setJoined(false);
+  };
+
+  // ✅ Live Member Count
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, "channels", id, "members"),
+      (snapshot) => {
+        setMemberCount(snapshot.size);
+      }
+    );
+
+    return () => unsub();
+  }, [id]);
+
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      
-      
-      <div style={{ padding: "15px", borderBottom: "1px solid #222", fontWeight: "bold" }}>
-         {id}
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "#0f0f0f",
+        color: "white",
+      }}
+    >
+      {/* ✅ HEADER */}
+      <div
+        style={{
+          padding: "16px 24px",
+          borderBottom: "1px solid #222",
+          fontWeight: "bold",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "#111",
+        }}
+      >
+        <div>
+          <h2 style={{ fontSize: "22px", color: "#cd5b5bff" }}>{id}</h2>
+          <p style={{ fontSize: "14px", opacity: 0.7 }}>
+            {memberCount} members
+          </p>
+        </div>
+
+        {joined ? (
+          <button
+            onClick={leaveChannel}
+            style={{
+              background: "#ef4444",
+              color: "white",
+              padding: "8px 18px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "15px",
+              transition: "0.3s",
+            }}
+          >
+            Leave
+          </button>
+        ) : (
+          <button
+            onClick={joinChannel}
+            style={{
+              background: "#22c55e",
+              color: "white",
+              padding: "8px 18px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "15px",
+              transition: "0.3s",
+            }}
+          >
+            Join
+          </button>
+        )}
       </div>
 
       
-      <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+      <div
+        style={{
+          flex: 1,
+          padding: "20px",
+          overflowY: "auto",
+        }}
+      >
         {messages.map((msg) => (
           <div
             key={msg.id}
             style={{
-              marginBottom: "10px",
+              marginBottom: "12px",
               display: "flex",
-              justifyContent: msg.uid === user?.uid ? "flex-end" : "flex-start",
+              justifyContent:
+                msg.uid === user?.uid ? "flex-end" : "flex-start",
             }}
           >
             <div
               style={{
-                background: msg.uid === user?.uid ? "#0070f3" : "#1f1f1f",
+                background:
+                msg.uid === user?.uid ? "#cd5b5bff" : "#1f1f1f",
                 color: "white",
-                padding: "10px 14px",
-                borderRadius: "10px",
+                padding: "12px 16px",
+                borderRadius: "14px",
                 maxWidth: "70%",
-                fontSize: "14px",
+                fontSize: "16px",
+                lineHeight: "1.4",
               }}
             >
-              <strong style={{ fontSize: "12px", opacity: 0.7 }}>{msg.user}</strong>
+              <strong style={{ fontSize: "13px", opacity: 0.7 }}>
+                {msg.user}
+              </strong>
               <div>{msg.text}</div>
             </div>
           </div>
         ))}
+
+        <div ref={bottomRef} />
       </div>
 
       
-      <div style={{ padding: "15px", borderTop: "1px solid #222", display: "flex", gap: "10px" }}>
+      <div
+        style={{
+          padding: "14px",
+          borderTop: "1px solid #222",
+          display: "flex",
+          gap: "12px",
+          background: "#111",
+        }}
+      >
         <input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message..."
+          placeholder={
+            joined ? "Type a message..." : "Join channel to send messages"
+          }
+          disabled={!joined}
           style={{
             flex: 1,
-            padding: "10px",
-            borderRadius: "6px",
+            padding: "14px",
+            borderRadius: "10px",
             border: "none",
             outline: "none",
+            fontSize: "16px",
+            background: joined ? "white" : "#444",
+            color: joined ? "black" : "gray",
           }}
         />
+
         <button
           onClick={sendMessage}
+          disabled={!joined}
           style={{
-            padding: "10px 16px",
-            background: "#0070f3",
+            padding: "12px 22px",
+            background: joined ? "#cd5b5bff" : "#555",
             color: "white",
-            borderRadius: "6px",
-            cursor: "pointer",
+            borderRadius: "10px",
+            cursor: joined ? "pointer" : "not-allowed",
+            fontSize: "16px",
+            transition: "0.3s",
           }}
         >
           Send

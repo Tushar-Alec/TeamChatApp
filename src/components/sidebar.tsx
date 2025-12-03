@@ -47,6 +47,7 @@ export default function Sidebar() {
         borderRight: "1px solid #222",
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <div
@@ -85,6 +86,7 @@ export default function Sidebar() {
           padding: "15px 20px",
           borderTop: "1px solid #222",
           background: "#0c0c0c",
+          height: "100px",
         }}
       >
         <button
@@ -124,50 +126,60 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <div style={{ padding: "15px", flex: 1 }}>
-        {channels.map((c) => {
-          const isActive = pathname === `/channels/${c.id}`;
+      <div
+  style={{
+    padding: "15px",
+    flex: 1,
+    overflowY: "auto",     // ✅ enables vertical scrolling
+    overflowX: "hidden",  // ✅ prevents sideways scroll
+  }}
+>
+  {channels.map((c) => {
+    const isActive = pathname === `/channels/${c.id}`;
 
-          return (
-            <Link
-              key={c.id}
-              href={`/channels/${c.id}`}
-              style={{
-                textDecoration: "none",
-                color: "white",
-              }}
-            >
-              <div
-                style={{
-                  padding: "12px 14px",
-                  marginBottom: "8px",
-                  background: isActive ? "#333" : "#161616",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  transition: "0.2s",
-                  fontSize: "15px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  border: isActive ? "1px solid #555" : "1px solid transparent",
-                }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.background = isActive
-                    ? "#3d3d3d"
-                    : "#262626")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.background = isActive
-                    ? "#333"
-                    : "#161616")
-                }
-              >
-                <span style={{ opacity: 0.8 }}>#</span> {c.name}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+    return (
+      <Link
+        key={c.id}
+        href={`/channels/${c.id}`}
+        style={{
+          textDecoration: "none",
+          color: "white",
+        }}
+      >
+        <div
+          style={{
+            padding: "12px 14px",
+            marginBottom: "8px",
+            background: isActive ? "#333" : "#161616",
+            borderRadius: "8px",
+            cursor: "pointer",
+            transition: "0.2s",
+            fontSize: "15px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            border: isActive
+              ? "1px solid #555"
+              : "1px solid transparent",
+          }}
+          onMouseOver={(e) =>
+            (e.currentTarget.style.background = isActive
+              ? "#3d3d3d"
+              : "#262626")
+          }
+          onMouseOut={(e) =>
+            (e.currentTarget.style.background = isActive
+              ? "#333"
+              : "#161616")
+          }
+        >
+          <span style={{ opacity: 0.8 }}>#</span> {c.name}
+        </div>
+      </Link>
+    );
+  })}
+</div>
+
 
       <div
         style={{

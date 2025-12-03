@@ -1,11 +1,14 @@
 "use client";
-import AuthGuard from "@/components/AuthGuard";
 
+import MainLayout from "@/components/MainLayout";
 
 export default function HomePage() {
   return (
-    <AuthGuard>
-      <h1>Welcome to the Chat App</h1>
-    </AuthGuard>
+    <MainLayout>
+      <div style={{ padding: "20px" }}>
+        <h1>Welcome to the Chat App</h1>
+        <p>Select a channel from the sidebar.</p>
+      </div>
+    </MainLayout>
   );
 }

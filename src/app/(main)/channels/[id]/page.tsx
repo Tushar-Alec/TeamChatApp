@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useEffect, useState, useRef } from "react";
-import { db } from "@/firebase/firebase";
+import { db, rtdb } from "@/firebase/firebase";
 import {
   addDoc,
   collection,
@@ -14,8 +14,13 @@ import {
   setDoc,
   getDoc,
   deleteDoc,
+  limit,
+  startAfter,
+  getDocs,
+  updateDoc,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { onValue, ref, set, remove } from "firebase/database";
 
 export default function ChannelPage({
   params,
@@ -28,15 +33,43 @@ export default function ChannelPage({
   const [messages, setMessages] = useState<any[]>([]);
   const [joined, setJoined] = useState(false);
   const [memberCount, setMemberCount] = useState(0);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [typingUsers, setTypingUsers] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const auth = getAuth();
   const user = auth.currentUser;
 
   const bottomRef = useRef<HTMLDivElement>(null);
-
   const memberRef = doc(db, "channels", id, "members", user?.uid || "unknown");
+  const isLoadingMoreRef = useRef(false);
 
-  // Check if joined
+  useEffect(() => {
+    const statusRef = ref(rtdb, "/status");
+
+    const unsub = onValue(statusRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const users = Object.values(data).filter(
+        (u: any) => u.state === "online"
+      );
+      setOnlineUsers(users);
+    });
+
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const typingRef = ref(rtdb, `typing/${id}`);
+
+    const unsub = onValue(typingRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      setTypingUsers(Object.values(data));
+    });
+
+    return () => unsub();
+  }, [id]);
+
   useEffect(() => {
     if (!user) return;
 
@@ -48,11 +81,13 @@ export default function ChannelPage({
     checkJoin();
   }, [id, user]);
 
-  // Listen to messages
   useEffect(() => {
+    if (!id) return;
+
     const q = query(
       collection(db, "channels", id, "messages"),
-      orderBy("createdAt")
+      orderBy("createdAt", "desc"),
+      limit(10)
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
@@ -60,33 +95,67 @@ export default function ChannelPage({
         id: doc.id,
         ...doc.data(),
       }));
-      setMessages(list);
+
+      setMessages(list.reverse());
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
     });
 
     return () => unsub();
   }, [id]);
 
-  // Auto scroll to latest message
   useEffect(() => {
+    if (isLoadingMoreRef.current) {
+      isLoadingMoreRef.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send Message
   const sendMessage = async () => {
     if (!message.trim() || !joined) return;
 
-    await addDoc(collection(db, "channels", id, "messages"), {
-      text: message,
-      createdAt: serverTimestamp(),
-      user: user?.displayName || user?.email || "User",
-      uid: user?.uid,
-      channelId: id,
-    });
+    if (editingId) {
+      await updateDoc(doc(db, "channels", id, "messages", editingId), {
+        text: message,
+      });
+      setEditingId(null);
+    } else {
+      await addDoc(collection(db, "channels", id, "messages"), {
+        text: message,
+        createdAt: serverTimestamp(),
+        user: user?.displayName || user?.email || "User",
+        uid: user?.uid,
+        channelId: id,
+      });
+    }
 
     setMessage("");
+    remove(ref(rtdb, `typing/${id}/${user?.uid}`));
   };
 
-  // Join Channel
+  const loadMoreMessages = async () => {
+    if (!lastDoc) return;
+
+    isLoadingMoreRef.current = true;
+
+    const q = query(
+      collection(db, "channels", id, "messages"),
+      orderBy("createdAt", "desc"),
+      startAfter(lastDoc),
+      limit(10)
+    );
+
+    const snapshot = await getDocs(q);
+
+    const olderMessages = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    setMessages((prev) => [...olderMessages.reverse(), ...prev]);
+    setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+  };
+
   const joinChannel = async () => {
     if (!user) return;
 
@@ -99,15 +168,12 @@ export default function ChannelPage({
     setJoined(true);
   };
 
-  // Leave Channel
   const leaveChannel = async () => {
     if (!user) return;
-
     await deleteDoc(memberRef);
     setJoined(false);
   };
 
-  // Live Member Count
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, "channels", id, "members"),
@@ -119,6 +185,24 @@ export default function ChannelPage({
     return () => unsub();
   }, [id]);
 
+  const handleTyping = (val: string) => {
+    setMessage(val);
+
+    if (!user) return;
+
+    const typingRef = ref(rtdb, `typing/${id}/${user.uid}`);
+
+    if (val.trim()) {
+      set(typingRef, user.displayName || user.email);
+    } else {
+      remove(typingRef);
+    }
+  };
+
+  const deleteMessage = async (msgId: string) => {
+    await deleteDoc(doc(db, "channels", id, "messages", msgId));
+  };
+
   return (
     <div
       style={{
@@ -129,12 +213,10 @@ export default function ChannelPage({
         color: "white",
       }}
     >
-      
       <div
         style={{
           padding: "15px 24px",
           borderBottom: "1px solid #e75480",
-          fontWeight: "bold",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -148,17 +230,26 @@ export default function ChannelPage({
           </p>
         </div>
 
+        <span
+          style={{
+            fontSize: "14px",
+            fontWeight: "500",
+            color: "#33bd68ff",
+            padding: "4px 10px",
+            borderRadius: "999px",
+          }}
+        >
+          ● {onlineUsers.length} online
+        </span>
+
         {joined ? (
           <button
             onClick={leaveChannel}
             style={{
               background: "#ef4444",
-              color: "white",
               padding: "8px 18px",
               borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "15px",
-              transition: "0.3s",
             }}
           >
             Leave
@@ -168,12 +259,8 @@ export default function ChannelPage({
             onClick={joinChannel}
             style={{
               background: "#22c55e",
-              color: "white",
               padding: "8px 18px",
               borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "15px",
-              transition: "0.3s",
             }}
           >
             Join
@@ -181,40 +268,88 @@ export default function ChannelPage({
         )}
       </div>
 
-      
-      <div
-        style={{
-          flex: 1,
-          padding: "20px",
-          overflowY: "auto",
-        }}
-      >
+      <div style={{ flex: 1, padding: "20px", overflowY: "auto",borderLeft: "1px solid #e75480" }}>
+        <button
+          onClick={loadMoreMessages}
+          style={{
+            margin: "10px auto",
+            display: "block",
+            padding: "8px 14px",
+            color: "#646263ff",
+            cursor: "pointer",
+          }}
+        >
+          Load Older Messages
+        </button>
+
         {messages.map((msg) => (
           <div
             key={msg.id}
             style={{
               marginBottom: "12px",
               display: "flex",
-              justifyContent:
-                msg.uid === user?.uid ? "flex-end" : "flex-start",
+              justifyContent: msg.uid === user?.uid ? "flex-end" : "flex-start",
             }}
           >
             <div
               style={{
-                background:
-                msg.uid === user?.uid ? "#e75480" : "#353232ff",
-                color: "white",
+                background: msg.uid === user?.uid ? "#e75480" : "#353232ff",
                 padding: "16px 22px",
                 borderRadius: "14px",
                 maxWidth: "70%",
-                fontSize: "20px",
-                lineHeight: "1.4",
+                fontSize: "18px",
               }}
             >
-              <strong style={{ fontSize: "13px", opacity: 0.7 }}>
-                {msg.user}
-              </strong>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  marginBottom: "4px",
+                  opacity: 0.7,
+                  fontSize: "12px",
+                }}
+              >
+                <strong>{msg.user}</strong>
+                <span>
+                  {msg.createdAt?.seconds
+                    ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString(
+                        [],
+                        { hour: "2-digit", minute: "2-digit" }
+                      )
+                    : ""}
+                </span>
+              </div>
+
               <div>{msg.text}</div>
+
+              {msg.uid === user?.uid && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    marginTop: "6px",
+                    fontSize: "12px",
+                    opacity: 0.7,
+                  }}
+                >
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      setEditingId(msg.id);
+                      setMessage(msg.text);
+                    }}
+                  >
+                    Edit
+                  </span>
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={() => deleteMessage(msg.id)}
+                  >
+                    Delete
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -222,7 +357,12 @@ export default function ChannelPage({
         <div ref={bottomRef} />
       </div>
 
-      
+      {typingUsers.length > 0 && (
+        <div style={{ paddingLeft: "20px", fontSize: "13px", opacity: 0.7 }}>
+          {typingUsers.join(", ")} typing...
+        </div>
+      )}
+
       <div
         style={{
           padding: "14px",
@@ -234,20 +374,16 @@ export default function ChannelPage({
       >
         <input
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={
-            joined ? "Type a message..." : "Join channel to send messages"
-          }
+          onChange={(e) => handleTyping(e.target.value)}
+          placeholder={joined ? "Type a message..." : "Join channel to chat"}
           disabled={!joined}
           style={{
             flex: 1,
             padding: "14px",
             borderRadius: "10px",
-            border: "none",
-            outline: "none",
-            fontSize: "16px",
-            background: joined ? "white" : "#444",
-            color: joined ? "black" : "gray",
+            border: "1px solid #333",
+            background: "#1a1a1a",
+            color: "white",
           }}
         />
 
@@ -256,15 +392,12 @@ export default function ChannelPage({
           disabled={!joined}
           style={{
             padding: "12px 22px",
-            background: joined ? "#e75480" : "#555",
-            color: "white",
+            background: "#e75480",
             borderRadius: "10px",
-            cursor: joined ? "pointer" : "not-allowed",
-            fontSize: "16px",
-            transition: "0.3s",
+            cursor: "pointer",
           }}
         >
-          Send
+          {editingId ? "Update" : "Send"}
         </button>
       </div>
     </div>

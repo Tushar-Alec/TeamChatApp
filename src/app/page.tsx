@@ -52,7 +52,7 @@ export default function HomePage() {
           <div
             style={{
               padding: "14px 22px",
-              background: "#cd5b5bff",
+              background: "#e75480",
               color: "white",
               borderRadius: "10px",
               display: "inline-block",

@@ -46,7 +46,7 @@ export default function LoginPage() {
         <button 
           onClick={handleLogin}
           style={{
-            width: "107%",
+            width: "100%",
             padding: "10px",
             background: "black",
             color: "white",
@@ -54,6 +54,10 @@ export default function LoginPage() {
             marginTop: "10px",
             cursor: "pointer"
           }}
+
+          onMouseOver={(e) => (e.currentTarget.style.background = "#1c1b1bff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "black")}
+
         >
           Login
         </button>

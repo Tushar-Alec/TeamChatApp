@@ -36,7 +36,7 @@ export default function ChannelPage({
 
   const memberRef = doc(db, "channels", id, "members", user?.uid || "unknown");
 
-  // ✅ Check if joined
+  // Check if joined
   useEffect(() => {
     if (!user) return;
 
@@ -48,7 +48,7 @@ export default function ChannelPage({
     checkJoin();
   }, [id, user]);
 
-  // ✅ Listen to messages
+  // Listen to messages
   useEffect(() => {
     const q = query(
       collection(db, "channels", id, "messages"),
@@ -66,12 +66,12 @@ export default function ChannelPage({
     return () => unsub();
   }, [id]);
 
-  // ✅ Auto scroll to latest message
+  // Auto scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ✅ Send Message
+  // Send Message
   const sendMessage = async () => {
     if (!message.trim() || !joined) return;
 
@@ -80,12 +80,13 @@ export default function ChannelPage({
       createdAt: serverTimestamp(),
       user: user?.displayName || user?.email || "User",
       uid: user?.uid,
+      channelId: id,
     });
 
     setMessage("");
   };
 
-  // ✅ Join Channel
+  // Join Channel
   const joinChannel = async () => {
     if (!user) return;
 
@@ -98,7 +99,7 @@ export default function ChannelPage({
     setJoined(true);
   };
 
-  // ✅ Leave Channel
+  // Leave Channel
   const leaveChannel = async () => {
     if (!user) return;
 
@@ -106,7 +107,7 @@ export default function ChannelPage({
     setJoined(false);
   };
 
-  // ✅ Live Member Count
+  // Live Member Count
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, "channels", id, "members"),
@@ -128,11 +129,11 @@ export default function ChannelPage({
         color: "white",
       }}
     >
-      {/* ✅ HEADER */}
+      
       <div
         style={{
-          padding: "16px 24px",
-          borderBottom: "1px solid #222",
+          padding: "15px 24px",
+          borderBottom: "1px solid #e75480",
           fontWeight: "bold",
           display: "flex",
           justifyContent: "space-between",
@@ -141,7 +142,7 @@ export default function ChannelPage({
         }}
       >
         <div>
-          <h2 style={{ fontSize: "22px", color: "#cd5b5bff" }}>{id}</h2>
+          <h2 style={{ fontSize: "22px", color: "#e75480" }}>{id}</h2>
           <p style={{ fontSize: "14px", opacity: 0.7 }}>
             {memberCount} members
           </p>
@@ -201,12 +202,12 @@ export default function ChannelPage({
             <div
               style={{
                 background:
-                msg.uid === user?.uid ? "#cd5b5bff" : "#1f1f1f",
+                msg.uid === user?.uid ? "#e75480" : "#353232ff",
                 color: "white",
-                padding: "12px 16px",
+                padding: "16px 22px",
                 borderRadius: "14px",
                 maxWidth: "70%",
-                fontSize: "16px",
+                fontSize: "20px",
                 lineHeight: "1.4",
               }}
             >
@@ -255,7 +256,7 @@ export default function ChannelPage({
           disabled={!joined}
           style={{
             padding: "12px 22px",
-            background: joined ? "#cd5b5bff" : "#555",
+            background: joined ? "#e75480" : "#555",
             color: "white",
             borderRadius: "10px",
             cursor: joined ? "pointer" : "not-allowed",

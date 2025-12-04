@@ -56,7 +56,7 @@ export default function Sidebar() {
           borderBottom: "1px solid #222",
           fontSize: "30px",
           fontWeight: "bold",
-          background: "#cd5b5bff",
+          background: "#e75480",
           textAlign: "center",
           letterSpacing: "3px",
           color: "white",

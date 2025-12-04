@@ -70,7 +70,7 @@ export default function SignupPage() {
         <button 
           onClick={handleSignup}
           style={{
-            width: "107%",
+            width: "100%",
             padding: "10px",
             background: "black",
             color: "white",
@@ -78,6 +78,8 @@ export default function SignupPage() {
             marginTop: "10px",
             cursor: "pointer"
           }}
+           onMouseOver={(e) => (e.currentTarget.style.background = "#1c1b1bff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "black")}
         >
           Create Account
         </button>

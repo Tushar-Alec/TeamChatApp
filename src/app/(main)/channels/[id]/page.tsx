@@ -279,7 +279,7 @@ export default function ChannelPage({
             cursor: "pointer",
           }}
         >
-          Load Older Messages
+          Load Older Messages 
         </button>
 
         {messages.map((msg) => (

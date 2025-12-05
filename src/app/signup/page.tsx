@@ -5,6 +5,8 @@ import { useState } from "react";
 import { auth } from "@/firebase/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import RedirectIfAuth from "@/components/RedirectIfAuth";
+import { signOut } from "firebase/auth";
+
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -28,11 +30,14 @@ export default function SignupPage() {
       online: true,
     });
 
+    await signOut(auth);
+
     window.location.href = "/login";
   } catch (err: any) {
     setError(err.message);
   }
 };
+
 
 
   return (

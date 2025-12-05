@@ -28,3 +28,12 @@ A full-stack real-time chat application that allows users to join channels, send
    * Firestore Database
    * Realtime Database
 4. Start the development server using `npm run dev`.
+
+## Assumptions & Limitations
+• Firebase free tier limits apply for database reads/writes and concurrent connections.
+• The application currently supports basic email/password authentication only.
+• Presence detection depends on browser and network stability, so sudden disconnects may not update status instantly.
+
+## Optional Add-Ons
+• Typing Indicators – Shows when another user is actively typing in the channel.
+• Message Editing and Deletion – Users can edit or delete their own messages after sending.

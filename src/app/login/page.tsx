@@ -48,15 +48,15 @@ export default function LoginPage() {
           style={{
             width: "100%",
             padding: "10px",
-            background: "black",
+            background: "#e75480",
             color: "white",
             borderRadius: "6px",
             marginTop: "10px",
             cursor: "pointer"
           }}
 
-          onMouseOver={(e) => (e.currentTarget.style.background = "#1c1b1bff")}
-          onMouseOut={(e) => (e.currentTarget.style.background = "black")}
+          onMouseOver={(e) => (e.currentTarget.style.background = "#f36c94ff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "#e75480")}
 
         >
           Login

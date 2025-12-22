@@ -1,5 +1,5 @@
-# Real-Time Chat Application
-
+# Real-Time Chat Application <a href="https://team-chat-app-three.vercel.app/"> Live App<a>
+<a><a>
 A full-stack real-time chat application that allows users to join channels, send messages instantly, view online users, and load older messages using pagination. The app supports authentication, presence tracking, and smooth real-time communication across multiple users.
 
 ## Features
